@@ -1,5 +1,6 @@
 from typing import Optional
 from abc import ABC, abstractmethod
+from .error import UnsupportedFileFormatError
 
 
 class BaseValidator(ABC):
@@ -20,3 +21,13 @@ class BaseValidator(ABC):
     @abstractmethod
     def validate(self, value):
         raise NotImplemented("Не реализован метод validate")
+
+
+class FileFormatValidator(BaseValidator):
+
+    def __init__(self, allowed_formats: list[str]):
+        self.allowed_formats = allowed_formats
+
+    def validate(self, value):
+        if value not in self.allowed_formats:
+            raise UnsupportedFileFormatError(value, self.allowed_formats)
