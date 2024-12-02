@@ -1,6 +1,6 @@
-from typing import Optional
+import os
 from abc import ABC, abstractmethod
-from .error import UnsupportedFileFormatError
+from .error import UnsupportedFileFormatError, DirectoryDoesNotExistError
 
 
 class BaseValidator(ABC):
@@ -31,3 +31,10 @@ class FileFormatValidator(BaseValidator):
     def validate(self, value):
         if value not in self.allowed_formats:
             raise UnsupportedFileFormatError(value, self.allowed_formats)
+
+
+class DirectoryPathValidator(BaseValidator):
+
+    def validate(self, value):
+        if not os.path.isdir(value):
+            raise DirectoryDoesNotExistError(value)
