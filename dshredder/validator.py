@@ -1,6 +1,6 @@
 import os
 from abc import ABC, abstractmethod
-from .error import UnsupportedFileFormatError, DirectoryDoesNotExistError
+from .error import UnsupportedFileFormatError, DirectoryDoesNotExistError, PortionSizeLargerThanEntireArrayError
 
 
 class BaseValidator(ABC):
@@ -38,3 +38,8 @@ class DirectoryPathValidator(BaseValidator):
     def validate(self, value):
         if not os.path.isdir(value):
             raise DirectoryDoesNotExistError(value)
+
+
+def CountRowValidator(selected_size: int, array_size: int):
+    if selected_size > array_size:
+        raise PortionSizeLargerThanEntireArrayError(selected_size, array_size)
