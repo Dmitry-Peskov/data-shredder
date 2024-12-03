@@ -5,87 +5,67 @@ from typing import Literal, Optional
 
 import pandas
 
-from .component.validator import FileFormatValidator, DirectoryPathValidator, CountRowValidator
+from .component.validator import FileFormatValidator, DirectoryPathValidator, LinesPerServingValidator, NegativeLinesPerServingValidator
 
-FileFormal = Literal["xlsx", "csv"]
+Extensions = Literal["xlsx", "csv"]
 
 
 class Shredder:
     extension = FileFormatValidator(allowed_formats=["xlsx", "csv"])
     directory = DirectoryPathValidator()
+    lines_per_serving = NegativeLinesPerServingValidator()
 
-    def __init__(self, result_directory: str, file_format: FileFormal = "csv"):
-        """
-        Измельчитель DataFrame'ов Pandas.
+    def __init__(
+            self,
+            directory: str,
+            extension: Extensions = "csv",
+            lines_per_serving: int = 1000
+    ):
+        self.extension = extension
+        self.directory = directory
+        self.lines_per_serving = lines_per_serving
 
-        Позволяет некоторый набор данных разделить на несколько выходных файлов формата CSV / XLSX с заданным количеством строк.
+    def run(
+            self,
+            dataframe: pandas.DataFrame,
+            file_name: Optional[str] = None,
+            *args,
+            **kwargs
+    ) -> None:
+        number_output_files = self.__get_number_of_output_files(dataframe)
+        base_file_name = self.__get_output_file_name(file_name)
+        dataframe_copy = dataframe.copy(deep=True)
+        for idx in range(number_output_files):
+            file_num = idx + 1
+            file_path = self.__get_output_file_path(base_file_name, file_num)
+            content = dataframe_copy.iloc[:self.lines_per_serving, :]
+            self.__save_content_to_file(content, file_path, *args, **kwargs)
+            dataframe_copy = dataframe_copy.iloc[self.lines_per_serving:, :]
 
-        Для начала создайте экземпляр измельчителя и сохраните его в переменную:
-
-        >>> shredder = Shredder(result_directory="C:\\Program Files", file_format="xlsx")
-
-        Вызовете созданный экземпляр как функцию, передав соответствующие аргументы
-
-        >>> import pandas as pd
-
-        >>> df = pd.read_csv("C:\\Program Files\\test.csv")
-        >>> shredder(dataframe=df, lines_per_serving=100, file_name="slice")
-
-        Для сохранения данных в файлы, "под капотом" используются стандартные методы pandas:
-
-        `to_excel()`_.
-
-        `to_csv()`_.
-
-        Через *args и **kwargs можно передать дополнительный параметры для этих методов.
-
-        Например:
-
-        >>> shredder(dataframe=df, lines_per_serving=100, file_name="slice", index=False, decimal=",")
-
-
-        .. _to_excel(): https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_excel.html
-        .. _to_csv(): https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.to_csv.html
-
-        :param result_directory: Путь до каталога, в которой будут сохранены результирующие файлы
-        :param file_format: Формат выходных файлов. Доступные варианты CSV, XLSX. По умолчанию CSV.
-        :raise UnsupportedFileFormatError: В ситуации если в file_format задан не поддерживаемый формат файла.
-        :raise DirectoryDoesNotExistError: В ситуации если заданный в result_directory путь не существует или не является каталогом.
-        """
-        self.extension = file_format
-        self.directory = result_directory
-
-    def __call__(self, dataframe: pandas.DataFrame, lines_per_serving: int, file_name: Optional[str] = None, *args, **kwargs) -> None:
-        """
-        Нарезать набор данных на файлы с заданным количеством строк в каждом.
-
-        :param dataframe: Набор данных (pandas.DataFrame)
-        :param lines_per_serving: Предельное количество строк в одном выходном файле
-        :param file_name: Имя для выходного файла. К имени будет добавлен префикс с номером файла. Если имя файла не задано, будет сгенерировано имя по умолчанию, содержащее текущую дату и время.
-        :param args: Произвольные позиционные аргументы, которые будут переданы методу to_excel(), to_csv() вызванному на pandas.DataFrame
-        :param kwargs: Произвольные именованные аргументы, которые будут переданы методу to_excel(), to_csv() вызванному на pandas.DataFrame
-        :raise LineLimitHasBeenExceededError: В ситуации если значение lines_per_serving превышает количество строк в исходном наборе данных.
-        :raise NegativeNumberOfRowsError: В ситуации если значение lines_per_serving имеет отрицательное значение.
-        :return:
-        """
+    def __get_number_of_output_files(self, dataframe: pandas.DataFrame) -> int:
         dataframe_length = len(dataframe)
-        # Валидируем количество строк в выходном файле
-        CountRowValidator(lines_per_serving, dataframe_length)
-        # Рассчитываем количество выходных файлов
-        number_output_files = math.ceil(dataframe_length / lines_per_serving)
-        buffer = dataframe.copy(deep=True)
-        file = ".".join([file_name, self.extension]) if file_name else ".".join([self.__get_default_file_name(), self.extension])
-        for i in range(number_output_files):
-            file_num = i + 1
-            file_path = os.path.join(self.directory, f"{file_num}_{file}")
-            file_data = buffer.iloc[:lines_per_serving, :]
-            match self.extension:
-                case "xlsx":
-                    file_data.to_excel(file_path, *args, **kwargs)
-                case "csv":
-                    file_data.to_csv(file_path, *args, **kwargs)
-            buffer = buffer.iloc[lines_per_serving:, :]
+        validator = LinesPerServingValidator()
+        validator(self.lines_per_serving, dataframe_length)
+        return math.ceil(dataframe_length / self.lines_per_serving)
+
+    def __get_output_file_name(self, file_name: str) -> str:
+        if file_name:
+            return ".".join([file_name, self.extension])
+        return ".".join([f"Shredder run {datetime.now().strftime('%d.%m.%Y in %H-%M-%S')}", self.extension])
+
+    def __get_output_file_path(self, file_name, file_num) -> str:
+        return os.path.join(self.directory, f"{file_num}_{file_name}")
+
+    def __save_content_to_file(self, dataframe: pandas.DataFrame, path: str, *args, **kwargs) -> None:
+        match self.extension:
+            case "xlsx":
+                dataframe.to_excel(path, *args, **kwargs)
+            case "csv":
+                dataframe.to_csv(path, *args, **kwargs)
 
     @staticmethod
     def __get_default_file_name() -> str:
         return f"Result {datetime.now().strftime('%d.%m.%Y %H-%M-%S')}"
+
+    def __repr__(self) -> str:
+        return f'{self.__class__.__name__}(directory="{self.directory}", extension="{self.extension}, lines_per_serving={self.lines_per_serving}")'

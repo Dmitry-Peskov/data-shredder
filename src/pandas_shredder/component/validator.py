@@ -40,8 +40,15 @@ class DirectoryPathValidator(BaseValidator):
             raise DirectoryDoesNotExistError(value)
 
 
-def CountRowValidator(selected_size: int, array_size: int):
-    if selected_size > array_size:
-        raise LineLimitHasBeenExceededError(selected_size, array_size)
-    if selected_size < 0:
-        raise NegativeNumberOfRowsError(selected_size)
+class NegativeLinesPerServingValidator(BaseValidator):
+
+    def validate(self, value):
+        if value < 0:
+            raise NegativeNumberOfRowsError(value)
+
+
+class LinesPerServingValidator:
+
+    def __call__(self, lines_per_serving: int, dataframe_length: int):
+        if lines_per_serving > dataframe_length:
+            raise LineLimitHasBeenExceededError(lines_per_serving, dataframe_length)
