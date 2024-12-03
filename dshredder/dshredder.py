@@ -1,11 +1,11 @@
 import math
 import os.path
 from datetime import datetime
+from typing import Literal, Optional
 
 import pandas
-from typing import Literal, Optional
-from .validator import DirectoryPathValidator, FileFormatValidator, CountRowValidator
 
+from .validator import DirectoryPathValidator, FileFormatValidator, CountRowValidator
 
 FileFormal = Literal["xlsx", "csv"]
 
@@ -65,6 +65,7 @@ class Shredder:
         :param args: Произвольные позиционные аргументы, которые будут переданы методу to_excel(), to_csv() вызванному на pandas.DataFrame
         :param kwargs: Произвольные именованные аргументы, которые будут переданы методу to_excel(), to_csv() вызванному на pandas.DataFrame
         :raise PortionSizeLargerThanEntireArrayError: В ситуации если значение lines_per_serving превышает количество строк в исходном наборе данных.
+        :raise NegativeNumberOfRowsError: В ситуации если значение lines_per_serving имеет отрицательное значение.
         :return:
         """
         dataframe_length = len(dataframe)
