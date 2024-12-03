@@ -5,7 +5,7 @@ from typing import Literal, Optional
 
 import pandas
 
-from .validator import DirectoryPathValidator, FileFormatValidator, CountRowValidator
+from .component.validator import FileFormatValidator, DirectoryPathValidator, CountRowValidator
 
 FileFormal = Literal["xlsx", "csv"]
 
@@ -55,7 +55,7 @@ class Shredder:
         self.extension = file_format
         self.directory = result_directory
 
-    def __call__(self, dataframe: pandas.DataFrame, lines_per_serving: int, file_name: Optional[str], *args, **kwargs) -> None:
+    def __call__(self, dataframe: pandas.DataFrame, lines_per_serving: int, file_name: Optional[str] = None, *args, **kwargs) -> None:
         """
         Нарезать набор данных на файлы с заданным количеством строк в каждом.
 
@@ -64,7 +64,7 @@ class Shredder:
         :param file_name: Имя для выходного файла. К имени будет добавлен префикс с номером файла. Если имя файла не задано, будет сгенерировано имя по умолчанию, содержащее текущую дату и время.
         :param args: Произвольные позиционные аргументы, которые будут переданы методу to_excel(), to_csv() вызванному на pandas.DataFrame
         :param kwargs: Произвольные именованные аргументы, которые будут переданы методу to_excel(), to_csv() вызванному на pandas.DataFrame
-        :raise PortionSizeLargerThanEntireArrayError: В ситуации если значение lines_per_serving превышает количество строк в исходном наборе данных.
+        :raise LineLimitHasBeenExceededError: В ситуации если значение lines_per_serving превышает количество строк в исходном наборе данных.
         :raise NegativeNumberOfRowsError: В ситуации если значение lines_per_serving имеет отрицательное значение.
         :return:
         """
@@ -74,7 +74,7 @@ class Shredder:
         # Рассчитываем количество выходных файлов
         number_output_files = math.ceil(dataframe_length / lines_per_serving)
         buffer = dataframe.copy(deep=True)
-        file = ".".join([file_name, self.extension]) if file_name else self.__get_default_file_name()
+        file = ".".join([file_name, self.extension]) if file_name else ".".join([self.__get_default_file_name(), self.extension])
         for i in range(number_output_files):
             file_num = i + 1
             file_path = os.path.join(self.directory, f"{file_num}_{file}")
@@ -88,4 +88,4 @@ class Shredder:
 
     @staticmethod
     def __get_default_file_name() -> str:
-        return f"Result {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+        return f"Result {datetime.now().strftime('%d.%m.%Y %H-%M-%S')}"

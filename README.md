@@ -5,7 +5,7 @@
 Инициализируйте экземпляр измельчителя:
 
 ```python
-from pandas_shredder import Shredder
+from src.pandas_shredder import Shredder
 
 shredder = Shredder(
     result_directory="C:\\Program Files",
@@ -20,7 +20,7 @@ shredder = Shredder(
 
 ```python
 import pandas as pd
-from pandas_shredder import Shredder
+from src.pandas_shredder import Shredder
 
 # Создаём набор данных на основе произвольного большого файла
 df = pd.read_excel("test.xlsx")
