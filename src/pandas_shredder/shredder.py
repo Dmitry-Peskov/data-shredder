@@ -29,7 +29,6 @@ class Shredder:
             self,
             dataframe: pandas.DataFrame,
             file_name: Optional[str] = None,
-            *args,
             **kwargs
     ) -> None:
         number_output_files = self.__get_number_of_output_files(dataframe)
@@ -39,7 +38,7 @@ class Shredder:
             file_num = idx + 1
             file_path = self.__get_output_file_path(base_file_name, file_num)
             content = dataframe_copy.iloc[:self.lines_per_serving, :]
-            self.__save_content_to_file(content, file_path, *args, **kwargs)
+            self.__save_content_to_file(content, file_path, **kwargs)
             dataframe_copy = dataframe_copy.iloc[self.lines_per_serving:, :]
 
     def __get_number_of_output_files(self, dataframe: pandas.DataFrame) -> int:
@@ -56,12 +55,12 @@ class Shredder:
     def __get_output_file_path(self, file_name, file_num) -> str:
         return os.path.join(self.directory, f"{file_num}_{file_name}")
 
-    def __save_content_to_file(self, dataframe: pandas.DataFrame, path: str, *args, **kwargs) -> None:
+    def __save_content_to_file(self, dataframe: pandas.DataFrame, path: str, **kwargs) -> None:
         match self.extension:
             case "xlsx":
-                dataframe.to_excel(path, *args, **kwargs)
+                dataframe.to_excel(path, **kwargs)
             case "csv":
-                dataframe.to_csv(path, *args, **kwargs)
+                dataframe.to_csv(path, **kwargs)
 
     @staticmethod
     def __get_default_file_name() -> str:
