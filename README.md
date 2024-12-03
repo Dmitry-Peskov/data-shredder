@@ -2,9 +2,10 @@
 Пакет, предоставляющий интерфейс для нарезки Pandas.DataFrame на отдельные файлы с заданным количеством строк в каждом из них
 
 
-Инициализируйте экземпляр измельчителя:  
+Инициализируйте экземпляр измельчителя:
+
 ```python
-from dshredder import Shredder
+from pandas_shredder import Shredder
 
 shredder = Shredder(
     result_directory="C:\\Program Files",
@@ -19,7 +20,7 @@ shredder = Shredder(
 
 ```python
 import pandas as pd
-from dshredder import Shredder
+from pandas_shredder import Shredder
 
 # Создаём набор данных на основе произвольного большого файла
 df = pd.read_excel("test.xlsx")
