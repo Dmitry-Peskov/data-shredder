@@ -7,11 +7,12 @@ import pandas
 
 from .component.validator import FileFormatValidator, DirectoryPathValidator, LinesPerServingValidator, NegativeLinesPerServingValidator
 
-Extensions = Literal["xlsx", "csv"]
+
+Extensions = Literal["xlsx", "csv", "json", "xml", "html"]
 
 
 class Shredder:
-    extension = FileFormatValidator(allowed_formats=["xlsx", "csv"])
+    extension = FileFormatValidator(allowed_formats=["xlsx", "csv", "json", "xml", "html"])
     directory = DirectoryPathValidator()
     lines_per_serving = NegativeLinesPerServingValidator()
 
@@ -47,7 +48,7 @@ class Shredder:
         validator(self.lines_per_serving, dataframe_length)
         return math.ceil(dataframe_length / self.lines_per_serving)
 
-    def __get_output_file_name(self, file_name: str) -> str:
+    def __get_output_file_name(self, file_name: Optional[str]) -> str:
         if file_name:
             return ".".join([file_name, self.extension])
         return ".".join([f"Shredder run {datetime.now().strftime('%d.%m.%Y in %H-%M-%S')}", self.extension])
@@ -61,10 +62,12 @@ class Shredder:
                 dataframe.to_excel(path, **kwargs)
             case "csv":
                 dataframe.to_csv(path, **kwargs)
-
-    @staticmethod
-    def __get_default_file_name() -> str:
-        return f"Result {datetime.now().strftime('%d.%m.%Y %H-%M-%S')}"
+            case "html":
+                dataframe.to_html(path, **kwargs)
+            case "xml":
+                dataframe.to_xml(path, **kwargs)
+            case "json":
+                dataframe.to_json(path, **kwargs)
 
     def __repr__(self) -> str:
         return f'{self.__class__.__name__}(directory="{self.directory}", extension="{self.extension}, lines_per_serving={self.lines_per_serving}")'
