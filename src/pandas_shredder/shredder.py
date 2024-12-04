@@ -12,6 +12,13 @@ Extensions = Literal["xlsx", "csv", "json", "xml", "html"]
 
 
 class Shredder:
+    """
+    Измельчитель для объектов типа DataFrame из pandas.
+
+    Предоставляет возможность "нарезать" на N файлов c фиксированным количество строк произвольный набор данных.
+
+    Поддерживает следующие форматы выходных файлов: ``xlsx``, ``html``, ``csv``, ``json``, ``html``.
+    """
     extension = FileFormatValidator(allowed_formats=["xlsx", "csv", "json", "xml", "html"])
     directory = DirectoryPathValidator()
     lines_per_serving = NegativeLinesPerServingValidator()
@@ -22,6 +29,37 @@ class Shredder:
             extension: Extensions = "csv",
             lines_per_serving: int = 1000
     ):
+        """
+        Измельчитель для объектов типа DataFrame из pandas.
+
+        Пример
+        --------
+        Сформируйте DataFrame, который необходимо разделить на файлы с фиксированным количеством строк.
+
+        >>> import pandas as pd
+        >>> df = pd.read_excel("C:\\Documents\\big_data.xlsx")
+
+        Создайте экземпляр измельчителя, указав путь до каталога для сохранения результата, формат выходных файлов и количество строк в одном файле.
+
+        >>> shredder = Shredder(directory="C:\\Documents", extension="xlsx", lines_per_serving=100)
+
+        Вызовете метод ``run()`` передав ему набор данных и дополнительные настройки.
+
+        >>> shredder.run(dataframe=df, file_name="small_data", index=False, header=True)
+
+        Для сохранения "меньших" наборов данных в файлы, используются стандартные методы DataFrame ``to_csv()``, ``to_excel()``, ``to_html()``, ``to_xml()``, ``to_json()``.
+
+        При вызове ``run()`` вместо ``kwargs`` вы можете передать поддерживаемые этими методами именнованные аргументы.
+
+        За подробностями обратитесь к официальной документации pandas.
+
+        :param directory: Путь к каталогу, в который будут сохранены итоговые файлы;
+        :param extension: Расширение файлов, содержащих результат работы;
+        :param lines_per_serving: Максимально количество строк в одном выходном файле;
+        :raise UnsupportedFileFormatError: Указанное в extension значение не является одним из поддерживаемых расширений файлов;
+        :raise DirectoryDoesNotExistError: Указанное в directory значение не является существующем каталогом в системе;
+        :raise NegativeNumberOfRowsError: Указанное в lines_per_serving значение является отрицательным числом или нулём;
+        """
         self.extension = extension
         self.directory = directory
         self.lines_per_serving = lines_per_serving
@@ -32,6 +70,15 @@ class Shredder:
             file_name: Optional[str] = None,
             **kwargs
     ) -> None:
+        """
+        Запустить процесс "нарезки" набора данных на файлы с заданным количество строк.
+
+        :param dataframe: Набор данных pandas.DataFrame, который необходимо разделить на файлы с заданным количество строк в каждом;
+        :param file_name: Имя для файлов результата. К имени каждого файла будет добавлен префикс с его номером; Если имя не задано, оно будет сформировано из даты и времени запуска.
+        :param kwargs: Опционально. Именованные аргументы, которые допустимы для методов DataFrame: ``to_csv()``, ``to_excel()``, ``to_html()``, ``to_xml()``, ``to_json()``. Подробнее в документации этих методов на сайте pandas.
+        :raise LineLimitHasBeenExceededError: Количество строк в переданном dataframe меньше, чем было задано в lines_per_serving при инициализации Shredder
+        :return:
+        """
         number_output_files = self.__get_number_of_output_files(dataframe)
         base_file_name = self.__get_output_file_name(file_name)
         dataframe_copy = dataframe.copy(deep=True)
@@ -70,4 +117,4 @@ class Shredder:
                 dataframe.to_json(path, **kwargs)
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(directory="{self.directory}", extension="{self.extension}, lines_per_serving={self.lines_per_serving}")'
+        return f'{self.__class__.__name__}(directory="{self.directory}", extension="{self.extension}", lines_per_serving={self.lines_per_serving})'

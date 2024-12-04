@@ -43,7 +43,7 @@ class DirectoryPathValidator(BaseValidator):
 class NegativeLinesPerServingValidator(BaseValidator):
 
     def validate(self, value):
-        if value < 0:
+        if value <= 0:
             raise NegativeNumberOfRowsError(value)
 
 

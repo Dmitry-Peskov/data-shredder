@@ -28,5 +28,5 @@ class NegativeNumberOfRowsError(ValueError):
     """Выбрано отрицательное количество строк"""
 
     def __init__(self, selected_size: int):
-        self.message = "Количество строк не может быть отрицательным. Задано значение %s" % selected_size
+        self.message = "Количество строк не может быть отрицательным или равно 0. Задано значение %s" % selected_size
         super().__init__(self.message)
