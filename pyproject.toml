@@ -4,16 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pandas_shredder"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Dmitriy Peskov", email="dv.peskov@yandex.ru" },
 ]
-description = "Измельчитель DataFrame`ов Pandas на файлы с фиксированным количеством строк"
+description = "Измельчитель для Pandas DataFrame. Позволяет нарезать набор данных на файлы с фиксированным количеством строк"
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
+    "Development Status :: 5 - Production/Stable"
 ]
 dependencies = [
     "pandas>=2.2.3",
